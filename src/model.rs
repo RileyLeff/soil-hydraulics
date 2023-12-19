@@ -1,6 +1,7 @@
-use libm::{fabs, pow};
 use crate::errors::InvalidVGModelError;
+use libm::{fabs, pow};
 
+/// Does this work is this a doc
 struct VanGenuchtenModel {
     a: f64, 
     n: f64,
