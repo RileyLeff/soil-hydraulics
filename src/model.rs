@@ -1,7 +1,6 @@
 use libm::{fabs, pow};
-use crate::errors::InvalidModelError;
+use crate::errors::InvalidVGModelError;
 
-#[derive(Debug, PartialEq)]
 struct VanGenuchtenModel {
     a: f64, 
     n: f64,
@@ -12,25 +11,26 @@ struct VanGenuchtenModel {
 }
 
 impl VanGenuchtenModel {
-    fn new(a: f64, n: f64, k_sat: f64, k_max: f64, theta_sat: f64, theta_res: f64) -> Result<Self, InvalidModelError> {
-        if a <= 0.0 {
-            Err(InvalidModelError::BadAlpha())
-        } else if n <= 0.0 {
-            Err(InvalidModelError::BadN())
-        } else if k_sat <= 0.0 {
-            Err(InvalidModelError::BadKSat())
-        } else if k_max <= 0.0 {
-            Err(InvalidModelError::BadKMax())
-        } else if theta_sat <= 0.0 || theta_sat >= 1.0 {
-            Err(InvalidModelError::BadThetaSat())
-        } else if theta_res <= 0.0 || theta_res >= 1.0 {
-            Err(InvalidModelError::BadThetaRes())
-        } else if theta_res >= theta_sat {
-            Err(InvalidModelError::ThetaSatResDisagreement())
-        } else {
-            Ok(VanGenuchtenModel{a, n, k_sat, k_max, theta_sat, theta_res})
+
+    fn new(
+        a: f64, 
+        n: f64, 
+        k_sat: f64, 
+        k_max: f64, 
+        theta_sat: f64, 
+        theta_res: f64
+    ) -> Result<Self, InvalidVGModelError> {
+            match (
+                a <= 0.0 || n <= 0.0 || k_sat <= 0.0 || k_max <= 0.0,
+                theta_sat <= 0.0 || theta_sat >= 1.0,
+                theta_res >= theta_sat
+            ) {
+                (true, _, _) => Err(InvalidVGModelError::BadNegativeParameter()),
+                (_, true, _) => Err(InvalidVGModelError::ParameterOutOfBounds()),
+                (_, _, true) => Err(InvalidVGModelError::ThetaDisagreement()),
+                _ => Ok(VanGenuchtenModel { a, n, k_sat, k_max, theta_sat, theta_res }),
+            }
         }
-    }
 
     fn get_water_content(&self, psi: f64) -> f64 {
         self.theta_res + 
@@ -55,6 +55,13 @@ impl VanGenuchtenModel {
 
 impl Default for VanGenuchtenModel {
     fn default() -> VanGenuchtenModel {
-        VanGenuchtenModel {a: 1479.5945, n: 2.68, k_sat: 29.7, k_max: 30305.88, theta_sat: 0.43, theta_res: 0.045}
+        VanGenuchtenModel {
+            a: 1479.5945, 
+            n: 2.68, 
+            k_sat: 29.7, 
+            k_max: 30305.88, 
+            theta_sat: 0.43, 
+            theta_res: 0.045
+        }
     }
 }
