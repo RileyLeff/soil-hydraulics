@@ -3,6 +3,7 @@ use crate::errors::InvalidVGModelError;
 #[cfg(not(feature = "std"))]
 use libm::{fabs, pow};
 
+
 /// Does this work is this a doc
 /// Hello I'm a doc
 /// I'm public now i hope i'm visible
