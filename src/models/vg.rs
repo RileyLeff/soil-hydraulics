@@ -1,7 +1,6 @@
 use crate::errors::InvalidVGModelError;
 
-#[cfg(not(feature = "std"))]
-use libm::{fabs, pow};
+use num_traits::Float;
 
 
 /// Does this work is this a doc
@@ -39,15 +38,15 @@ impl VanGenuchtenModel {
     }
 
     fn get_water_content(&self, psi: f64) -> f64 {
-        let exponent = pow(1.0 + (self.a * fabs(psi)), -self.n);
-        self.theta_res + (self.theta_sat - self.theta_res) * pow(exponent, 1.0 - 1.0 / self.n)
+        let exponent = (1.0 + (self.a * f64::abs(psi))).powf(-self.n);
+        self.theta_res + (self.theta_sat - self.theta_res) * exponent.powf(1.0 - 1.0 / self.n)
     }
 
     fn get_water_potential(&self, theta: f64) -> f64 {
         let m = 1.0 - 1.0 / self.n;
         let base = (theta - self.theta_res) / (self.theta_sat - self.theta_res);
-        let exponent = pow(base, -1.0 / self.n);
-        self.a * pow(exponent - 1.0, 1.0 / m)
+        let exponent = base.powf(-1.0 / self.n);
+        self.a * (exponent - 1.0).powf(1.0 / m)
     }
 }
 
