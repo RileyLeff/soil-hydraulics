@@ -2,18 +2,29 @@ use crate::errors::InvalidVGModelError;
 
 use num_traits::Float;
 
-
+enum VGPreset{
+    Sand,
+    LoamySand,
+    SandyLoam,
+    Silt,
+    SiltyLoam,
+    SandyClayLoam,
+    ClayLoam,
+    SiltyClayLoam,
+    SiltyClay,
+    Clay
+}
 /// Does this work is this a doc
 /// Hello I'm a doc
 /// I'm public now i hope i'm visible
-pub struct VanGenuchtenModel {
+pub struct VG {
     a: f64,
     n: f64,
     theta_sat: f64,
     theta_res: f64,
 }
 
-impl VanGenuchtenModel {
+impl VG {
     pub fn new(
         a: f64,
         n: f64,
@@ -28,7 +39,7 @@ impl VanGenuchtenModel {
             (true, _, _) => Err(InvalidVGModelError::BadNegativeParameter()),
             (_, true, _) => Err(InvalidVGModelError::ParameterOutOfBounds()),
             (_, _, true) => Err(InvalidVGModelError::ThetaDisagreement()),
-            _ => Ok(VanGenuchtenModel {
+            _ => Ok(VG {
                 a,
                 n,
                 theta_sat,
@@ -36,6 +47,8 @@ impl VanGenuchtenModel {
             }),
         }
     }
+
+    pub fn get_preset()
 
     fn get_water_content(&self, psi: f64) -> f64 {
         let exponent = (1.0 + (self.a * psi.abs())).powf(-self.n);
@@ -50,9 +63,9 @@ impl VanGenuchtenModel {
     }
 }
 
-impl Default for VanGenuchtenModel {
-    fn default() -> VanGenuchtenModel {
-        VanGenuchtenModel {
+impl Default for VG {
+    fn default() -> VG {
+        VG {
             a: 1479.5945,
             n: 2.68,
             theta_sat: 0.43,
