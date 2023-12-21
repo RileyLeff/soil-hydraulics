@@ -38,7 +38,7 @@ impl VanGenuchtenModel {
     }
 
     fn get_water_content(&self, psi: f64) -> f64 {
-        let exponent = (1.0 + (self.a * f64::abs(psi))).powf(-self.n);
+        let exponent = (1.0 + (self.a * psi.abs())).powf(-self.n);
         self.theta_res + (self.theta_sat - self.theta_res) * exponent.powf(1.0 - 1.0 / self.n)
     }
 

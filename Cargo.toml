@@ -3,8 +3,6 @@ name = "van-genuchten"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 num-traits = { version = "0.2.17", default-features = false }
 thiserror = { version = "1.0", package = "thiserror-core", default-features = false }
@@ -13,5 +11,6 @@ thiserror = { version = "1.0", package = "thiserror-core", default-features = fa
 default = ["libm"]
 libm = ["num-traits/libm"]
 std_math = ["num-traits/std"]
-std_errors = ["thiserror-core/std"]
+std_errors = ["thiserror/std"]
 std = ["std_math", "std_errors"]
+
