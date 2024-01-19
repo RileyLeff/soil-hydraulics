@@ -1,5 +1,5 @@
 [package]
-name = "van-genuchten"
+name = "soil-hydraulics"
 version = "0.1.0"
 edition = "2021"
 

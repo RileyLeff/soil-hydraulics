@@ -1,73 +1,48 @@
-use crate::errors::InvalidVGModelError;
+// use crate::errors::InvalidVGModelError;
+// use crate::models::vg::VG;
 
-use num_traits::Float;
+// use num_traits::Float;
 
-/// Does this work is this a doc
-/// Hello I'm a doc
-/// I'm public now i hope i'm visible
-pub struct VanGenuchtenModel {
-    a: f64,
-    n: f64,
-    k_sat: f64,
-    k_max: f64,
-    theta_sat: f64,
-    theta_res: f64,
-}
+// /// Van Genuchten - Mualem model for soil moisture and hydraulic conductivity.
+// pub struct VGM<F: Float> {
+//     vg: VG<F>,
+//     k_sat: f64,
+// }
 
-impl VanGenuchtenModel {
-    pub fn new(
-        a: f64,
-        n: f64,
-        k_sat: f64,
-        k_max: f64,
-        theta_sat: f64,
-        theta_res: f64,
-    ) -> Result<Self, InvalidVGModelError> {
-        match (
-            a <= 0.0 || n <= 0.0 || k_sat <= 0.0 || k_max <= 0.0,
-            theta_sat <= 0.0 || theta_sat >= 1.0,
-            theta_res >= theta_sat,
-        ) {
-            (true, _, _) => Err(InvalidVGModelError::BadNegativeParameter()),
-            (_, true, _) => Err(InvalidVGModelError::ParameterOutOfBounds()),
-            (_, _, true) => Err(InvalidVGModelError::ThetaDisagreement()),
-            _ => Ok(VanGenuchtenModel {
-                a,
-                n,
-                k_sat,
-                k_max,
-                theta_sat,
-                theta_res,
-            }),
-        }
-    }
+// impl<F: Float> VGM<F> {
+//     pub fn new(
+//         vg: VG<F>,
+//         k_sat: F,
+//     ) -> Result<Self, InvalidVGModelError> {
+//         if F::is_sign_negative(k_sat) {
+//             Err(InvalidVGModelError::BadNegativeParameter())
+//         } else {
+//             Ok(VGM{vg, k_sat})
+//         }
+//     }
 
-    fn get_water_content(&self, psi: f64) -> f64 {
-        let exponent = (1.0 + (self.a * psi.abs())).powf(-self.n);
-        self.theta_res + (self.theta_sat - self.theta_res) * exponent.powf(1.0 - 1.0 / self.n)
-    }
+//     fn get_water_content(&self, psi: F) -> F {
+//         let exponent = (1.0 + (self.a * psi.abs())).powf(-self.n);
+//         self.theta_res + (self.theta_sat - self.theta_res) * exponent.powf(1.0 - 1.0 / self.n)
+//     }
 
-    fn get_water_potential(&self, theta: f64) -> f64 {
-        let m = 1.0 - 1.0 / self.n;
-        let base = (theta - self.theta_res) / (self.theta_sat - self.theta_res);
-        let exponent = base.powf(-1.0 / self.n);
-        self.a * (exponent - 1.0).powf(1.0 / m)
-    }
+//     fn get_water_potential(&self, theta: f64) -> f64 {
+//         let m = 1.0 - 1.0 / self.n;
+//         let base = (theta - self.theta_res) / (self.theta_sat - self.theta_res);
+//         let exponent = base.powf(-1.0 / self.n);
+//         self.a * (exponent - 1.0).powf(1.0 / m)
+//     }
 
-    fn get_hydraulic_conductivity(&self) -> f64 {
-        self.k_max
-    }
-}
+//     fn get_hydraulic_conductivity(&self) -> f64 {
+//         69
+//     }
+// }
 
-impl Default for VanGenuchtenModel {
-    fn default() -> VanGenuchtenModel {
-        VanGenuchtenModel {
-            a: 1479.5945,
-            n: 2.68,
-            k_sat: 29.7,
-            k_max: 30305.88,
-            theta_sat: 0.43,
-            theta_res: 0.045,
-        }
-    }
-}
+// impl<F: Float> Default for VGM<F> {
+//     fn default() -> VGM<F> {
+//         VGM {
+//             vg: crate::models::vg::default(),
+//             k_sat: 29.7
+//         }
+//     }
+// }

@@ -1,89 +1,158 @@
-use crate::errors::InvalidVGModelError;
-
 use num_traits::Float;
+use crate::traits::RestrictedParameter;
+use crate::errors::InvalidVGParam;
 
-enum VGPreset{
-    Sand,
-    LoamySand,
-    SandyLoam,
-    Silt,
-    SiltyLoam,
-    SandyClayLoam,
-    ClayLoam,
-    SiltyClayLoam,
-    SiltyClay,
-    Clay
-}
-/// Does this work is this a doc
-/// Hello I'm a doc
-/// I'm public now i hope i'm visible
-pub struct VG {
-    a: f64,
-    n: f64,
-    theta_sat: f64,
-    theta_res: f64,
+/// Wrapper around arbitrary float type for van genuchten parameter "A"
+#[derive(Debug)]
+pub struct VgA<F: Float>(F);
+
+/// Check if VgA is valid
+impl<F: Float> RestrictedParameter<F> for VgA<F> {
+    fn is_valid(value: F) -> bool {
+        value.is_normal()
+    }
 }
 
-impl VG {
-    pub fn new(
-        a: f64,
-        n: f64,
-        theta_sat: f64,
-        theta_res: f64,
-    ) -> Result<Self, InvalidVGModelError> {
-        match (
-            a <= 0.0 || n <= 0.0,
-            theta_sat <= 0.0 || theta_sat >= 1.0,
-            theta_res >= theta_sat,
-        ) {
-            (true, _, _) => Err(InvalidVGModelError::BadNegativeParameter()),
-            (_, true, _) => Err(InvalidVGModelError::ParameterOutOfBounds()),
-            (_, _, true) => Err(InvalidVGModelError::ThetaDisagreement()),
-            _ => Ok(VG {
-                a,
-                n,
-                theta_sat,
-                theta_res,
-            }),
+/// VgA
+impl<F: Float> VgA<F> {
+    fn new(value: F) -> Result<Self, InvalidVGParam<F>> {
+        if Self::is_valid(value) {
+            Ok(Self(value))
+        } else {
+            Err(InvalidVGParam::BadVgAlpha(value))
         }
     }
 
-    pub fn get_preset()
-
-    fn get_water_content(&self, psi: f64) -> f64 {
-        let exponent = (1.0 + (self.a * psi.abs())).powf(-self.n);
-        self.theta_res + (self.theta_sat - self.theta_res) * exponent.powf(1.0 - 1.0 / self.n)
-    }
-
-    fn get_water_potential(&self, theta: f64) -> f64 {
-        let m = 1.0 - 1.0 / self.n;
-        let base = (theta - self.theta_res) / (self.theta_sat - self.theta_res);
-        let exponent = base.powf(-1.0 / self.n);
-        self.a * (exponent - 1.0).powf(1.0 / m)
+    fn get(&self) -> F {
+        self.0
     }
 }
 
-impl Default for VG {
-    fn default() -> VG {
-        VG {
-            a: 1479.5945,
-            n: 2.68,
-            theta_sat: 0.43,
-            theta_res: 0.045,
+impl TryFrom<f32> for VgA<f32>{
+    type Error = InvalidVGParam<f32>;
+    fn try_from(value: f32) -> Result<Self, Self::Error> {
+        VgA::new(value)
+    }
+}
+
+impl TryFrom<f64> for VgA<f64>{
+    type Error = InvalidVGParam<f64>;
+    fn try_from(value: f64) -> Result<Self, Self::Error> {
+        VgA::new(value)
+    }
+}
+
+#[derive(Debug)]
+pub struct VgN<F: Float>(F);
+
+impl<F: Float> RestrictedParameter<F> for VgN<F> {
+    fn is_valid(value: F) -> bool {
+        value.is_normal() && value > F::from(1.0).unwrap()
+    }
+}
+
+impl<F: Float> VgN<F> {
+    fn new(value: F) -> Result<Self, InvalidVGParam<F>> {
+        if Self::is_valid(value) {
+            Ok(Self(value))
+        } else {
+            Err(InvalidVGParam::BadVgN(value))
         }
     }
+
+    fn get(&self) -> F {
+        self.0
+    }
 }
 
-// enum BaseSoilModels{
-//     Sand,
-//     LoamySand,
-//     SandyLoam,
-//     Silt,
-//     SiltyLoam,
-//     SandyClayLoam,
-//     ClayLoam,
-//     SiltyClayLoam,
-//     SandyClayLoam,
-//     SiltyClay,
-//     Clay
-// }
+impl TryFrom<f32> for VgN<f32>{
+    type Error = InvalidVGParam<f32>;
+    fn try_from(value: f32) -> Result<Self, Self::Error> {
+        VgN::new(value)
+    }
+}
+
+impl TryFrom<f64> for VgN<f64>{
+    type Error = InvalidVGParam<f64>;
+    fn try_from(value: f64) -> Result<Self, Self::Error> {
+        VgN::new(value)
+    }
+}
+
+#[derive(Debug)]
+pub struct VgT<F: Float>(F);
+
+impl<F: Float> RestrictedParameter<F> for VgT<F> {
+    fn is_valid(value: F) -> bool {
+        value <= F::from(1.0).unwrap() && value >= F::from(0.0).unwrap() && !value.is_subnormal()
+    }
+}
+
+impl<F: Float> VgT<F> {
+    fn new(value: F) -> Result<Self, InvalidVGParam<F>> {
+        if Self::is_valid(value) {
+            Ok(Self(value))
+        } else {
+            Err(InvalidVGParam::BadVgTheta(value))
+        }
+    }
+
+    fn get(&self) -> F {
+        self.0
+    }
+}
+
+impl TryFrom<f32> for VgT<f32>{
+    type Error = InvalidVGParam<f32>;
+    fn try_from(value: f32) -> Result<Self, Self::Error> {
+        VgT::new(value)
+    }
+}
+
+impl TryFrom<f64> for VgT<f64>{
+    type Error = InvalidVGParam<f64>;
+    fn try_from(value: f64) -> Result<Self, Self::Error> {
+        VgT::new(value)
+    }
+}
+/// doc
+#[derive(Debug)]
+pub struct Vg<F: Float> {
+    a: VgA<F>,
+    n: VgN<F>,
+    ts: VgT<F>,
+    tr: VgT<F>
+}
+
+impl<F: Float> Vg<F> {
+
+    fn get_water_content(&self, psi: F) -> F {
+        let exponent = (F::one() + (self.a.get() * psi.abs())).powf(-self.n.get());
+        self.tr.get() + (self.ts.get() - self.tr.get()) * exponent.powf(F::one() - F::one() / self.n.get())
+    }
+
+    fn get_water_potential(&self, theta: F) -> F {
+        let m = F::one() - F::one() / self.n.get();
+        let base = (theta - self.tr.get()) / (self.ts.get() - self.tr.get());
+        let exponent = base.powf(-F::one() / self.n.get());
+        self.a.get() * (exponent - F::one()).powf(F::one() / m)
+    }
+}
+
+impl Vg<f64> {
+    const SAND: Self = Self {
+        a: VgA(1479.5945f64),
+        n: VgN(2.68f64),
+        ts: VgT(0.9f64),
+        tr: VgT(0.8f64)
+    };
+}
+
+impl Vg<f32> {
+    const SAND: Self = Self {
+        a: VgA(1479.5945f32),
+        n: VgN(2.68f32),
+        ts: VgT(0.9f32),
+        tr: VgT(0.8f32)
+    };
+}
