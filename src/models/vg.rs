@@ -1,25 +1,25 @@
 use num_traits::Float;
-use crate::traits::RestrictedParameter;
-use crate::errors::InvalidVGParam;
+use crate::traits::{WaterContentModel, RestrictedParameter};
+use crate::errors::{InvalidParam, InvalidSoilModel, UnknowableWaterPotential};
 
 /// Wrapper around arbitrary float type for van genuchten parameter "A"
-#[derive(Debug)]
-pub struct VgA<F: Float>(F);
+#[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Alpha<F: Float>(F);
 
 /// Check if VgA is valid
-impl<F: Float> RestrictedParameter<F> for VgA<F> {
+impl<F: Float> RestrictedParameter<F> for Alpha<F> {
     fn is_valid(value: F) -> bool {
-        value.is_normal()
+        value.is_normal() && value > F::from(0).unwrap()
     }
 }
 
 /// VgA
-impl<F: Float> VgA<F> {
-    fn new(value: F) -> Result<Self, InvalidVGParam<F>> {
+impl<F: Float> Alpha<F> {
+    fn new(value: F) -> Result<Self, InvalidParam<F>> {
         if Self::is_valid(value) {
             Ok(Self(value))
         } else {
-            Err(InvalidVGParam::BadVgAlpha(value))
+            Err(InvalidParam::BadVgAlpha(value))
         }
     }
 
@@ -28,35 +28,35 @@ impl<F: Float> VgA<F> {
     }
 }
 
-impl TryFrom<f32> for VgA<f32>{
-    type Error = InvalidVGParam<f32>;
+impl TryFrom<f32> for Alpha<f32>{
+    type Error = InvalidParam<f32>;
     fn try_from(value: f32) -> Result<Self, Self::Error> {
-        VgA::new(value)
+        Alpha::new(value)
     }
 }
 
-impl TryFrom<f64> for VgA<f64>{
-    type Error = InvalidVGParam<f64>;
+impl TryFrom<f64> for Alpha<f64>{
+    type Error = InvalidParam<f64>;
     fn try_from(value: f64) -> Result<Self, Self::Error> {
-        VgA::new(value)
+        Alpha::new(value)
     }
 }
 
-#[derive(Debug)]
-pub struct VgN<F: Float>(F);
+#[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct N<F: Float>(F);
 
-impl<F: Float> RestrictedParameter<F> for VgN<F> {
+impl<F: Float> RestrictedParameter<F> for N<F> {
     fn is_valid(value: F) -> bool {
         value.is_normal() && value > F::from(1.0).unwrap()
     }
 }
 
-impl<F: Float> VgN<F> {
-    fn new(value: F) -> Result<Self, InvalidVGParam<F>> {
+impl<F: Float> N<F> {
+    fn new(value: F) -> Result<Self, InvalidParam<F>> {
         if Self::is_valid(value) {
             Ok(Self(value))
         } else {
-            Err(InvalidVGParam::BadVgN(value))
+            Err(InvalidParam::BadVgN(value))
         }
     }
 
@@ -65,35 +65,39 @@ impl<F: Float> VgN<F> {
     }
 }
 
-impl TryFrom<f32> for VgN<f32>{
-    type Error = InvalidVGParam<f32>;
+impl TryFrom<f32> for N<f32>{
+    type Error = InvalidParam<f32>;
     fn try_from(value: f32) -> Result<Self, Self::Error> {
-        VgN::new(value)
+        N::new(value)
     }
 }
 
-impl TryFrom<f64> for VgN<f64>{
-    type Error = InvalidVGParam<f64>;
+impl TryFrom<f64> for N<f64>{
+    type Error = InvalidParam<f64>;
     fn try_from(value: f64) -> Result<Self, Self::Error> {
-        VgN::new(value)
+        N::new(value)
     }
 }
 
-#[derive(Debug)]
-pub struct VgT<F: Float>(F);
+#[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Theta<F: Float>(F);
 
-impl<F: Float> RestrictedParameter<F> for VgT<F> {
+impl<F: Float> RestrictedParameter<F> for Theta<F> {
     fn is_valid(value: F) -> bool {
-        value <= F::from(1.0).unwrap() && value >= F::from(0.0).unwrap() && !value.is_subnormal()
+        value <= F::from(1.0).unwrap() && 
+        value >= F::from(0.0).unwrap() && 
+        value.is_finite() &&
+        !value.is_nan() &&
+        !value.is_subnormal()
     }
 }
 
-impl<F: Float> VgT<F> {
-    fn new(value: F) -> Result<Self, InvalidVGParam<F>> {
+impl<F: Float> Theta<F> {
+    fn new(value: F) -> Result<Self, InvalidParam<F>> {
         if Self::is_valid(value) {
             Ok(Self(value))
         } else {
-            Err(InvalidVGParam::BadVgTheta(value))
+            Err(InvalidParam::BadVgTheta(value))
         }
     }
 
@@ -102,57 +106,77 @@ impl<F: Float> VgT<F> {
     }
 }
 
-impl TryFrom<f32> for VgT<f32>{
-    type Error = InvalidVGParam<f32>;
+impl TryFrom<f32> for Theta<f32>{
+    type Error = InvalidParam<f32>;
     fn try_from(value: f32) -> Result<Self, Self::Error> {
-        VgT::new(value)
+        Theta::new(value)
     }
 }
 
-impl TryFrom<f64> for VgT<f64>{
-    type Error = InvalidVGParam<f64>;
+impl TryFrom<f64> for Theta<f64>{
+    type Error = InvalidParam<f64>;
     fn try_from(value: f64) -> Result<Self, Self::Error> {
-        VgT::new(value)
+        Theta::new(value)
     }
 }
 /// doc
 #[derive(Debug)]
-pub struct Vg<F: Float> {
-    a: VgA<F>,
-    n: VgN<F>,
-    ts: VgT<F>,
-    tr: VgT<F>
+pub struct VanGenuchten<F: Float> {
+    a: Alpha<F>,
+    n: N<F>,
+    ts: Theta<F>,
+    tr: Theta<F>
 }
 
-impl<F: Float> Vg<F> {
+impl<F: Float> VanGenuchten<F> {
 
+    fn new(a: Alpha<F>, n: N<F>, ts: Theta<F>, tr: Theta<F>) -> Result<Self, InvalidSoilModel<F>> {
+        if tr < ts {
+            Ok(Self{a, n, ts, tr})
+        } else {
+            Err(InvalidSoilModel::ThetaDisagreement(tr.get(), ts.get()))
+        }
+    }
+}
+
+impl VanGenuchten<f64> {
+    const SAND: Self = Self {
+        a: Alpha(1479.5945f64),
+        n: N(2.68f64),
+        ts: Theta(0.9f64),
+        tr: Theta(0.8f64)
+    };
+}
+
+impl VanGenuchten<f32> {
+    const SAND: Self = Self {
+        a: Alpha(1479.5945f32),
+        n: N(2.68f32),
+        ts: Theta(0.9f32),
+        tr: Theta(0.8f32)
+    };
+}
+
+impl<F: Float> WaterContentModel<F> for VanGenuchten<F> {
+    
     fn get_water_content(&self, psi: F) -> F {
-        let exponent = (F::one() + (self.a.get() * psi.abs())).powf(-self.n.get());
-        self.tr.get() + (self.ts.get() - self.tr.get()) * exponent.powf(F::one() - F::one() / self.n.get())
+        if psi <= F::zero() {
+            let exponent = (F::one() + (self.a.get() * psi.abs())).powf(-self.n.get());
+            self.tr.get() + (self.ts.get() - self.tr.get()) * exponent.powf(F::one() - F::one() / self.n.get())
+        } else {
+            self.ts.get()
+        }
     }
 
-    fn get_water_potential(&self, theta: F) -> F {
+    fn get_water_potential(&self, theta: F) -> Result<F, UnknowableWaterPotential> {
         let m = F::one() - F::one() / self.n.get();
         let base = (theta - self.tr.get()) / (self.ts.get() - self.tr.get());
         let exponent = base.powf(-F::one() / self.n.get());
         self.a.get() * (exponent - F::one()).powf(F::one() / m)
     }
+
+    fn get_effective_saturation(&self, psi: F) -> F {
+        (self.get_water_content(psi) - self.tr.get()) / (self.ts.get() - self.tr.get())
+    }
 }
 
-impl Vg<f64> {
-    const SAND: Self = Self {
-        a: VgA(1479.5945f64),
-        n: VgN(2.68f64),
-        ts: VgT(0.9f64),
-        tr: VgT(0.8f64)
-    };
-}
-
-impl Vg<f32> {
-    const SAND: Self = Self {
-        a: VgA(1479.5945f32),
-        n: VgN(2.68f32),
-        ts: VgT(0.9f32),
-        tr: VgT(0.8f32)
-    };
-}
