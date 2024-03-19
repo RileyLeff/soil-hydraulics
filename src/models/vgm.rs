@@ -1,84 +1,66 @@
-use crate::errors::InvalidParam;
 use crate::models::vg::VanGenuchten;
-use crate::traits::{RestrictedParameter, WaterContentModel};
+use crate::errors::InvalidParam;
+use crate::FloatD;
+use floco::{Constrained, Floco};
+use serde::{Deserialize, Serialize};
 
-use num_traits::Float;
+/// Validator for arbitrary float type as van genuchten - mualem parameter "KSat"
+#[derive(Debug)]
+pub struct KSat;
 
-#[derive(Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct KSat<F: Float>(F);
+impl<F: FloatD> Constrained<F> for KSat {
+    type Error = InvalidParam<F>;
 
-
-impl<F: Float> RestrictedParameter<F> for KSat<F> {
     fn is_valid(value: F) -> bool {
         value >= F::from(0).unwrap() &&
         value.is_finite() &&
         !value.is_subnormal() &&
         !value.is_nan()
     }
+
+    fn emit_error(value: F) -> Self::Error {
+        Self::Error::BadVgMKSat(value)
+    }
+
+    fn get_default() -> F {
+        F::from(0.5).expect("Error getting default value for Van Genuchten Mualem parameter KSat")
+     }
+
 }
+#[derive(Debug)]
+pub struct L;
 
+impl<F: FloatD> Constrained<F> for L {
+    type Error = InvalidParam<F>;
 
-impl<F: Float> KSat<F> {
-    fn new(value: F) -> Result<Self, InvalidParam<F>> {
-        if Self::is_valid(value) {
-            Ok(Self(value))
-        } else {
-            Err(InvalidParam::BadVgMKSat(value))
-        }
+    fn is_valid(value: F) -> bool {
+        true // perhaps restrict in future
     }
 
-    fn get(&self) -> F {
-        self.0
+    fn emit_error(value: F) -> Self::Error {
+        Self::Error::BadVgMKSat(value)
     }
-}
 
-impl TryFrom<f32> for KSat<f32>{
-    type Error = InvalidParam<f32>;
-    fn try_from(value: f32) -> Result<Self, Self::Error> {
-        KSat::new(value)
-    }
-}
-
-impl TryFrom<f64> for KSat<f64>{
-    type Error = InvalidParam<f64>;
-    fn try_from(value: f64) -> Result<Self, Self::Error> {
-        KSat::new(value)
-    }
+    fn get_default() -> F {
+        F::from(0.5).expect("Error getting default value for Van Genuchten Mualem parameter L")
+     }
 }
 
 
 /// Van Genuchten - Mualem model for soil moisture and hydraulic conductivity.
-pub struct VanGenuchtenMualem<F: Float> {
+#[derive(Debug, Default, Serialize, Deserialize)]
+pub struct VanGenuchtenMualem<F: FloatD> {
     vg: VanGenuchten<F>,
-    ks: KSat<F>,
+    ksat: Floco<F, KSat>,
+    l: Floco<F, L>
 }
 
-impl<F: Float> VanGenuchtenMualem<F> {
+impl<F: FloatD> VanGenuchtenMualem<F> {
 
-    pub fn new(vg: VanGenuchten<F>, ks: KSat<F>) -> Self {
-        Self{vg, ks}
-
+    pub fn new(vg: VanGenuchten<F>, ksat: Floco<F, KSat>, l: Floco<F, L>) -> Self {
+        Self{vg, ksat, l}
     }
 
-    fn get_water_content(&self, psi: F) -> F {
-        let exponent = (1.0 + (self.a * psi.abs())).powf(-self.n);
-        self.theta_res + (self.theta_sat - self.theta_res) * exponent.powf(1.0 - 1.0 / self.n)
-    }
-
-    fn get_water_potential(&self, theta: f64) -> f64 {
-        let m = 1.0 - 1.0 / self.n;
-        let base = (theta - self.theta_res) / (self.theta_sat - self.theta_res);
-        let exponent = base.powf(-1.0 / self.n);
-        self.a * (exponent - 1.0).powf(1.0 / m)
-    }
-
-    fn get_hydraulic_conductivity(&self) -> f64 {
-        69
-    }
-}
-
-impl<F: Float> WaterContentModel<F> for VanGenuchtenMualem<F> {
-    
     fn get_water_content(&self, psi: F) -> F {
         self.vg.get_water_content(psi)
     }
@@ -86,14 +68,19 @@ impl<F: Float> WaterContentModel<F> for VanGenuchtenMualem<F> {
     fn get_water_potential(&self, theta: F) -> F {
         self.vg.get_water_potential(theta)
     }
-    
-}
 
-// impl<F: Float> Default for VanGenuchtenMualem<F> {
-//     fn default() -> VanGenuchtenMualem<F> {
-//         VanGenuchtenMualem {
-//             vg: crate::models::vg::default(),
-//             k_sat: 29.7
-//         }
-//     }
-// }
+    fn get_hydraulic_conductivity(&self, psi: F) -> F {
+        if psi > F::zero() {
+            self.ksat.get()
+        } else {
+            let se = self.vg.get_effective_saturation(psi);
+            let m = self.vg.get_m();
+            let first_term = self.ksat.get() * se.powf(self.l.get());
+            let second_term = (
+                F::one() - (F::one() - se.powf(F::one() / m)).powf(m)
+            )
+                .powf(F::one() + F::one());
+            return first_term * second_term
+        }
+    }
+}

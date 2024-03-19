@@ -17,6 +17,8 @@
     ), feature(error_in_core)
 )]
 
+use num_traits::Float;
+
 // ensure at least one of libm and std_math are enabled
 #[cfg(all(not(feature = "libm"), not(feature = "std_math")))]
 compile_error!(
@@ -29,9 +31,27 @@ compile_error!(
     "The 'libm' (enabled by default) and 'std_math' features cannot be enabled simultaneously."
 );
 
+#[cfg(feature = "libm")]
+use core::fmt::Display;
+
+#[cfg(feature = "libm")]
+use core::fmt::Debug;
+
+#[cfg(feature = "std_math")]
+use std::fmt::Display;
+
+#[cfg(feature = "std_math")]
+use std::fmt::Debug;
+
+
+
+#[cfg(feature = "std_math")]
+use std::fmt::Display;
+
+pub trait FloatD: Display + Debug + Float {}
+
 pub mod errors;
 pub mod models;
-pub mod traits;
 
 #[cfg(test)]
 mod tests {}

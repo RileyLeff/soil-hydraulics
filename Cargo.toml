@@ -4,13 +4,15 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+floco = { version = "0.1.0", default-features = false }
 num-traits = { version = "0.2.17", default-features = false }
+serde = { version = "1.0.197", default-features = false, features = ["derive"] }
 thiserror = { version = "1.0", package = "thiserror-core", default-features = false }
 
 [features]
-default = ["libm"]
-libm = ["num-traits/libm"]
-std_math = ["num-traits/std"]
+default = ["libm", "serde/derive"]
+libm = ["num-traits/libm", "floco/libm"]
+std_math = ["num-traits/std", "floco/std_math"]
 std_errors = ["thiserror/std"]
-std = ["std_math", "std_errors"]
+std = ["std_math", "std_errors", "floco/std", "serde/std"]
 
