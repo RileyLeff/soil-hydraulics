@@ -1,4 +1,4 @@
-# soil-hydraulics 🐃 &emsp; ![Build Status] [![Codecov Badge]][Codecov Info] [![Apache Badge]][Apache Link] [![MIT Badge]][MIT Link]
+# soil-hydraulics 🐃 &emsp;![Build Status] [![Codecov Badge]][Codecov Info] [![Apache Badge]][Apache Link] [![MIT Badge]][MIT Link]
 
 [Build Status]: https://github.com/rileyleff/soil-hydraulics/actions/workflows/rust.yml/badge.svg
 [Codecov Badge]: https://codecov.io/gh/RileyLeff/soil-hydraulics/graph/badge.svg?token=CEAG74DDK9
