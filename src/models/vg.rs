@@ -67,8 +67,7 @@ impl<F: FloatD> Constrained<F> for Theta {
     /// Note that theta_res and theta_sat share a type! The default value returns a reasonable
     /// theta sat, but you'll need to create a new value to get a theta res.
     fn get_default() -> F {
-        F::from(0.43)
-            .expect("Error getting default value for Van Genuchten Mualem parameter Theta")
+        F::from(0.43).expect("Error getting default value for Van Genuchten Mualem parameter Theta")
     }
 }
 
@@ -135,10 +134,9 @@ impl<F: FloatD> Default for VanGenuchten<F> {
         let n = Floco::<F, N>::default();
         let ts = Floco::<F, Theta>::default();
         let tr = Floco::<F, Theta>::try_new(
-            F::from(0.045)
-                .expect("Error converting theta_res default value into type F")
-            )
-                .expect("Error creating Floco<F, Theta> from default value.");
+            F::from(0.045).expect("Error converting theta_res default value into type F"),
+        )
+        .expect("Error creating Floco<F, Theta> from default value.");
         VanGenuchten::try_new(a, n, ts, tr)
             .expect("Error creating VanGenuchten model from default values.")
     }
@@ -168,7 +166,7 @@ mod tests {
         println!("Water potential is {:?}", psi);
         match psi {
             Ok(f) => println!("Water potential is {}", f),
-            Err(_) => println!("Error!")
+            Err(_) => println!("Error!"),
         }
         assert!(1 == 1);
     }
@@ -177,6 +175,4 @@ mod tests {
     fn get_effective_saturation_works() {
         assert!(1 == 1);
     }
-
-    
 }

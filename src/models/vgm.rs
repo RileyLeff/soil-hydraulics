@@ -27,7 +27,7 @@ impl<F: FloatD> Constrained<F> for KSat {
     }
 }
 
-/// Typically assumed to be 0.5, i.e. taking square root of other terms. 
+/// Typically assumed to be 0.5, i.e. taking square root of other terms.
 /// See doi.org/10.2136/vzj2005.0005 for more in-depth discussion.
 #[derive(Debug)]
 pub struct L;
@@ -61,6 +61,7 @@ impl<F: FloatD> VanGenuchtenMualem<F> {
         Self { vg, ksat, l }
     }
 
+    #[allow(dead_code)]
     fn get_hydraulic_conductivity(&self, psi: F) -> F {
         if psi > F::zero() {
             self.ksat.get()
@@ -83,6 +84,9 @@ mod tests {
 
     #[test]
     fn get_hydraulic_conductivity_works() {
+        let vgm = VanGenuchtenMualem::<f64>::default();
+        let cool = vgm.get_hydraulic_conductivity(-1.5f64);
+        println!("cool is {:?}", cool);
         assert!(1 == 1);
     }
 }
