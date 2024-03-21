@@ -11,6 +11,9 @@
 Rust implementation of the soil hydraulic model described in
 [Van Genuchten 1980](doi.org/10.2136/sssaj1980.03615995004400050002x).
 
+## Dev Dependencies
+The pre-commit config relies on [casey/just: 🤖 Just a command runner](https://github.com/casey/just)
+
 ## License
 
 Licensed under either of
