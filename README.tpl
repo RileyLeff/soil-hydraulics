@@ -1,4 +1,4 @@
-# soil-hydraulics 🛟 &emsp; ![Build Status] [![Codecov Badge]][Codecov Info] [![Apache Badge]][Apache Link] [![MIT Badge]][MIT Link]
+# {{crate}} 🛟 &emsp; ![Build Status] [![Codecov Badge]][Codecov Info] [![Apache Badge]][Apache Link] [![MIT Badge]][MIT Link]
 
 [Build Status]: https://github.com/rileyleff/soil-hydraulics/actions/workflows/rust.yml/badge.svg
 [Codecov Badge]: https://codecov.io/gh/RileyLeff/soil-hydraulics/graph/badge.svg?token=CEAG74DDK9
@@ -8,8 +8,7 @@
 [Apache Badge]: https://img.shields.io/badge/License-Apache_2.0-blue.svg
 [Apache Link]: https://opensource.org/licenses/Apache-2.0
 
-Rust implementation of the soil hydraulic model described in
-[Van Genuchten 1980](doi.org/10.2136/sssaj1980.03615995004400050002x).
+{{readme}}
 
 ## License
 

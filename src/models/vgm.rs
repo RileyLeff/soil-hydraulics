@@ -26,13 +26,16 @@ impl<F: FloatD> Constrained<F> for KSat {
         F::from(0.5).expect("Error getting default value for Van Genuchten Mualem parameter KSat")
     }
 }
+
+/// Typically assumed to be 0.5, i.e. taking square root of other terms. 
+/// See doi.org/10.2136/vzj2005.0005 for more in-depth discussion.
 #[derive(Debug)]
 pub struct L;
 
 impl<F: FloatD> Constrained<F> for L {
     type Error = InvalidParam<F>;
 
-    fn is_valid(value: F) -> bool {
+    fn is_valid(_value: F) -> bool {
         true // perhaps restrict in future
     }
 
@@ -58,14 +61,6 @@ impl<F: FloatD> VanGenuchtenMualem<F> {
         Self { vg, ksat, l }
     }
 
-    fn get_water_content(&self, psi: F) -> F {
-        self.vg.get_water_content(psi)
-    }
-
-    fn get_water_potential(&self, theta: F) -> F {
-        self.vg.get_water_potential(theta)
-    }
-
     fn get_hydraulic_conductivity(&self, psi: F) -> F {
         if psi > F::zero() {
             self.ksat.get()
@@ -75,7 +70,19 @@ impl<F: FloatD> VanGenuchtenMualem<F> {
             let first_term = self.ksat.get() * se.powf(self.l.get());
             let second_term =
                 (F::one() - (F::one() - se.powf(F::one() / m)).powf(m)).powf(F::one() + F::one());
-            return first_term * second_term;
+            first_term * second_term
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+    use std::println;
+
+    #[test]
+    fn get_hydraulic_conductivity_works() {
+        assert!(1 == 1);
     }
 }
